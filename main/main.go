@@ -21,6 +21,7 @@ func main() {
 
 	flag.StringVar(&dirSource, "source", dirSource, "Direktori dari sumber data image yang akan diolah")
 	flag.StringVar(&dirTarget, "target", dirTarget, "Direktori target untuk menyimpan image hasil olah")
+	flag.Parse()
 
 	fmt.Printf("Source: %s\r\n", dirSource)
 	fmt.Printf("Target: %s\r\n", dirTarget)

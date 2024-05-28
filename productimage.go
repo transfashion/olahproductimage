@@ -1,6 +1,7 @@
 package olahproductimage
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/agungdhewe/dwlog"
@@ -55,6 +56,8 @@ func (pi *ProductImage) Execute() error {
 		}
 
 	}
+
+	fmt.Println("DONE.")
 
 	return nil
 }

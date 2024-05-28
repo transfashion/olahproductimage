@@ -2,6 +2,7 @@ package olahproductimage
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -29,7 +30,7 @@ func convertToDir(path string, targetdir string) error {
 		col = proddata[1]
 		seq = proddata[2]
 		targetbasename = createSeqBaseName(seq, fileext)
-		err = convertWithColor(path, art, col, seq, targetbasename, targetdir)
+		err = convertWithColor(path, art, col, targetbasename, targetdir)
 		if err != nil {
 			dwlog.Error("error saat convert (demgan color) %s", filename)
 			return err
@@ -38,7 +39,7 @@ func convertToDir(path string, targetdir string) error {
 		art = proddata[0]
 		seq = proddata[1]
 		targetbasename = createSeqBaseName(seq, fileext)
-		err = convertWithoutColor(path, art, seq, targetbasename, targetdir)
+		err = convertWithoutColor(path, art, targetbasename, targetdir)
 		if err != nil {
 			dwlog.Error("error saat convert (tanpa color) %s", filename)
 			return err
@@ -52,7 +53,7 @@ func convertToDir(path string, targetdir string) error {
 	return nil
 }
 
-func convertWithColor(path string, art string, col string, seq string, targetbasename string, targetdir string) error {
+func convertWithColor(path string, art string, col string, targetbasename string, targetdir string) error {
 	var err error
 
 	// cek apakah direktori art ada di target dir
@@ -69,17 +70,29 @@ func convertWithColor(path string, art string, col string, seq string, targetbas
 		return err
 	}
 
-	// copy file ke direktori target dengan padding 0
+	// copy file ke direktori target, dengan nama file targetbasename
+	targetpath := filepath.Join(coldir, targetbasename)
+	err = copy(path, targetpath)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
-func convertWithoutColor(path string, art string, seq string, targetbasename strring, targetdir string) error {
+func convertWithoutColor(path string, art string, targetbasename string, targetdir string) error {
 	var err error
 
 	// cek apakah direktori art ada di target dir
 	artdir := filepath.Join(targetdir, art)
 	err = createArtDir(artdir)
+	if err != nil {
+		return err
+	}
+
+	// copy file ke direktori target, dengan nama file targetbasename
+	targetpath := filepath.Join(artdir, targetbasename)
+	err = copy(path, targetpath)
 	if err != nil {
 		return err
 	}
@@ -118,5 +131,32 @@ func createColDir(coldir string) error {
 }
 
 func createSeqBaseName(seq string, fileext string) string {
-	return fmt.Sprintf("%s.%s", seq, fileext)
+	filename := fmt.Sprintf("%02s", seq)
+	return fmt.Sprintf("%s%s", filename, fileext)
+}
+
+func copy(source string, target string) error {
+	// baca sumber file
+	r, err := os.Open(source)
+	if err != nil {
+		dwlog.Error("tidak bisa membaca file %s", source)
+		return err
+	}
+	defer r.Close()
+
+	// siapkan file sumber
+	w, err := os.Create(target)
+	if err != nil {
+		dwlog.Error("tidak bisa menulis ke file %s", target)
+		return err
+	}
+	defer w.Close()
+
+	_, err = io.Copy(w, r)
+	if err != nil {
+		dwlog.Error("tidak bisa copy file %s ke %s", source, target)
+		return err
+	}
+
+	return nil
 }
